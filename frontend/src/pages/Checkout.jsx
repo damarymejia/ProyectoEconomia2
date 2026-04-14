@@ -21,12 +21,13 @@ const METHODS = [
 ];
 
 function PaymentForm({ method, paymentData, setPaymentData }) {
-  const field = (key, label, placeholder, type = 'text') => (
+  const field = (key, label, placeholder, type = 'text', maxLength) => (
     <div>
       <label className="text-xs text-gray-500 mb-1 block">{label}</label>
       <input
         type={type}
         placeholder={placeholder}
+        maxLength={maxLength}
         value={paymentData[key] || ''}
         onChange={e => setPaymentData({ ...paymentData, [key]: e.target.value })}
         className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
@@ -39,10 +40,10 @@ function PaymentForm({ method, paymentData, setPaymentData }) {
       <div className="space-y-3 border rounded-xl p-4 bg-gray-50">
         <p className="text-sm font-medium text-gray-700">{method}</p>
         {field('cardName', 'Nombre en la tarjeta', 'Juan Perez')}
-        {field('cardNumber', 'Numero de tarjeta', '1234 5678 9012 3456')}
+        {field('cardNumber', 'Numero de tarjeta', '1234 5678 9012 3456', 'text', 16)}
         <div className="grid grid-cols-2 gap-3">
-          {field('expiry', 'Vencimiento', 'MM/AA')}
-          {field('cvv', 'CVV', '123')}
+          {field('expiry', 'Vencimiento', 'MM/AA', 'text', 5)}
+          {field('cvv', 'CVV', '123', 'password', 3)}
         </div>
       </div>
     );
@@ -109,6 +110,24 @@ export default function Checkout() {
 
   const baseTotal = total + shipping.cost;
   const finalTotal = baseTotal - discount;
+
+  // Lógica de validación añadida
+  const isFormValid = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[389]\d{7}$/;
+
+    const basicInfo = form.name && form.address && phoneRegex.test(form.phone) && emailRegex.test(form.email) && form.method;
+    
+    if (!basicInfo) return false;
+
+    if (form.method.includes('Tarjeta')) {
+      return paymentData.cardName && paymentData.cardNumber?.length === 16 && paymentData.expiry && paymentData.cvv?.length === 3;
+    }
+    if (form.method === 'Transferencia bancaria') {
+      return paymentData.transferRef && paymentData.transferBank;
+    }
+    return true; // Para pago en efectivo
+  };
 
   const applyCoupon = () => {
     const code = coupon.trim().toUpperCase();
@@ -186,11 +205,13 @@ export default function Checkout() {
             {CITIES.map(c => <option key={c}>{c}</option>)}
           </select>
           <input
-            placeholder="Telefono"
+            placeholder="Telefono (ej. 99887766)"
+            maxLength={8}
             className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
             onChange={e => setForm({ ...form, phone: e.target.value })}
           />
           <input
+            type="email"
             placeholder="Correo electronico"
             className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
             onChange={e => setForm({ ...form, email: e.target.value })}
@@ -295,7 +316,7 @@ export default function Checkout() {
 
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !isFormValid()}
             className="mt-6 w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 disabled:opacity-50 transition"
           >
             {loading ? 'Procesando...' : 'Confirmar compra'}
