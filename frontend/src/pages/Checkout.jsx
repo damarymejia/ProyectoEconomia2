@@ -42,6 +42,36 @@ const METHODS = [
 
 
 
+// ─── 1. REGLAS DE VALIDACIÓN ──────────────────────────────────────────────────
+const validate = (field, value) => {
+  switch (field) {
+    case 'name':
+      if (!value.trim()) return 'El nombre es requerido.';
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) return 'Solo se permiten letras.';
+      if (value.trim().length < 3) return 'Mínimo 3 caracteres.';
+      return '';
+    case 'address':
+      if (!value.trim()) return 'La dirección es requerida.';
+      return '';
+    case 'phone':
+      if (!value.trim()) return 'El teléfono es requerido.';
+      if (!/^\d{8}$/.test(value.trim())) return 'Ingresa exactamente 8 dígitos.';
+      return '';
+    case 'email':
+      if (!value.trim()) return 'El correo es requerido.';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Formato de correo inválido.';
+      return '';
+    default:
+      return '';
+  }
+};
+
+// ─── 2. COMPONENTE DE ERROR (reutilizable) ────────────────────────────────────
+const ErrorMsg = ({ msg }) =>
+  msg ? <span className="text-xs text-red-500 mt-1 block">{msg}</span> : null;
+
+
+
 function PaymentForm({ method, paymentData, setPaymentData }) {
 
   const field = (key, label, placeholder, type = 'text') => (
@@ -188,7 +218,11 @@ export default function Checkout() {
 
   });
 
+  // ─── 3. ESTADO DE ERRORES ──────────────────────────────────────────────────
+  const [errors, setErrors] = useState({ name: '', address: '', phone: '', email: '' });
 
+  // ─── 4. CAMPOS CON TOUCH (para no mostrar error antes de que el usuario toque el campo) ─
+  const [touched, setTouched] = useState({ name: false, address: false, phone: false, email: false });
 
   const [paymentData, setPaymentData] = useState({});
 
@@ -220,7 +254,19 @@ export default function Checkout() {
 
   const finalTotal = baseTotal - discount;
 
+  // ─── 5. HANDLER GENÉRICO: actualiza form + valida en tiempo real ───────────
+  const handleFieldChange = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (touched[field]) {
+      setErrors(prev => ({ ...prev, [field]: validate(field, value) }));
+    }
+  };
 
+  // Marca el campo como "tocado" al salir y valida
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    setErrors(prev => ({ ...prev, [field]: validate(field, form[field]) }));
+  };
 
   const applyCoupon = () => {
 
@@ -275,6 +321,20 @@ export default function Checkout() {
 
 
   const handleSubmit = async () => {
+
+    // ─── 6. VALIDACIÓN GLOBAL AL ENVIAR ───────────────────────────────────────
+    const fields = ['name', 'address', 'phone', 'email'];
+    const newErrors = {};
+    const newTouched = {};
+    fields.forEach(f => {
+      newErrors[f] = validate(f, form[f]);
+      newTouched[f] = true;
+    });
+    setErrors(newErrors);
+    setTouched(newTouched);
+
+    // Si hay algún error, detiene el envío
+    if (fields.some(f => newErrors[f])) return;
 
     setLoading(true);
 
@@ -336,27 +396,31 @@ export default function Checkout() {
 
           <h2 className="font-bold text-lg mb-2">Datos de entrega</h2>
 
+          {/* ── Nombre ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Nombre Completo</label>
+            <input
+              placeholder="Nombre completo"
+              className={`w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 ${errors.name ? 'border-red-400 focus:ring-red-300' : 'focus:ring-gray-400'}`}
+              value={form.name}
+              onChange={e => handleFieldChange('name', e.target.value)}
+              onBlur={() => handleBlur('name')}
+            />
+            <ErrorMsg msg={errors.name} />
+          </div>
 
-
-          <input
-
-            placeholder="Nombre completo"
-
-            className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
-
-            onChange={e => setForm({ ...form, name: e.target.value })}
-
-          />
-
-          <input
-
-            placeholder="Direccion"
-
-            className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
-
-            onChange={e => setForm({ ...form, address: e.target.value })}
-
-          />
+          {/* ── Dirección ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Dirección</label>
+            <input
+              placeholder="Direccion"
+              className={`w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 ${errors.address ? 'border-red-400 focus:ring-red-300' : 'focus:ring-gray-400'}`}
+              value={form.address}
+              onChange={e => handleFieldChange('address', e.target.value)}
+              onBlur={() => handleBlur('address')}
+            />
+            <ErrorMsg msg={errors.address} />
+          </div>
 
           <select
 
@@ -372,25 +436,31 @@ export default function Checkout() {
 
           </select>
 
-          <input
+          {/* ── Teléfono ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Teléfono</label>
+            <input
+              placeholder="Telefono"
+              className={`w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 ${errors.phone ? 'border-red-400 focus:ring-red-300' : 'focus:ring-gray-400'}`}
+              value={form.phone}
+              onChange={e => handleFieldChange('phone', e.target.value)}
+              onBlur={() => handleBlur('phone')}
+            />
+            <ErrorMsg msg={errors.phone} />
+          </div>
 
-            placeholder="Telefono"
-
-            className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
-
-            onChange={e => setForm({ ...form, phone: e.target.value })}
-
-          />
-
-          <input
-
-            placeholder="Correo electronico"
-
-            className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
-
-            onChange={e => setForm({ ...form, email: e.target.value })}
-
-          />
+          {/* ── Correo ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Correo Electrónico</label>
+            <input
+              placeholder="Correo electronico"
+              className={`w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 ${errors.email ? 'border-red-400 focus:ring-red-300' : 'focus:ring-gray-400'}`}
+              value={form.email}
+              onChange={e => handleFieldChange('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
+            />
+            <ErrorMsg msg={errors.email} />
+          </div>
 
 
 
