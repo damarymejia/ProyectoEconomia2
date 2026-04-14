@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { calculateShipping } from '../utils/shipping';
 import { trackPurchase } from '../utils/analytics';
-import { ShieldCheck, Truck, Tag } from 'lucide-react';
+import { ShieldCheck, Truck, CreditCard, Tag } from 'lucide-react';
 
 const COUPONS = [
   { code: 'DIGITAL10', type: 'percent', value: 10, min: 0, expires: '2026-12-31' },
@@ -20,8 +20,7 @@ const METHODS = [
   'Pago en efectivo'
 ];
 
-function PaymentForm({ method, paymentData, setPaymentData, errors, showErrors }) {
-
+function PaymentForm({ method, paymentData, setPaymentData, errors }) {
   const field = (key, label, placeholder, type = 'text') => (
     <div>
       <label className="text-xs text-gray-500 mb-1 block">{label}</label>
@@ -32,9 +31,7 @@ function PaymentForm({ method, paymentData, setPaymentData, errors, showErrors }
         onChange={e => setPaymentData({ ...paymentData, [key]: e.target.value })}
         className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
       />
-      {showErrors && errors[key] && (
-        <p className="text-xs text-red-500 mt-1">{errors[key]}</p>
-      )}
+      {errors?.[key] && <p className="text-red-500 text-xs">{errors[key]}</p>}
     </div>
   );
 
@@ -43,7 +40,7 @@ function PaymentForm({ method, paymentData, setPaymentData, errors, showErrors }
       <div className="space-y-3 border rounded-xl p-4 bg-gray-50">
         <p className="text-sm font-medium text-gray-700">{method}</p>
         {field('cardName', 'Nombre en la tarjeta', 'Juan Perez')}
-        {field('cardNumber', 'Numero de tarjeta', '1234567890123456')}
+        {field('cardNumber', 'Numero de tarjeta', '1234 5678 9012 3456')}
         <div className="grid grid-cols-2 gap-3">
           {field('expiry', 'Vencimiento', 'MM/AA')}
           {field('cvv', 'CVV', '123')}
@@ -56,14 +53,12 @@ function PaymentForm({ method, paymentData, setPaymentData, errors, showErrors }
     return (
       <div className="space-y-3 border rounded-xl p-4 bg-gray-50">
         <p className="text-sm font-medium text-gray-700">Transferencia bancaria</p>
-
         <div className="bg-white rounded-lg p-3 text-sm text-gray-600 space-y-1 border">
           <p><span className="font-medium">Banco:</span> Banco Atlantida</p>
           <p><span className="font-medium">Cuenta:</span> 1234-5678-9012</p>
           <p><span className="font-medium">Titular:</span> TiendaHN S.A.</p>
           <p><span className="font-medium">RTN:</span> 0801-1990-12345</p>
         </div>
-
         {field('transferRef', 'Numero de referencia', 'REF-123456')}
         {field('transferBank', 'Banco de origen', 'Banco Occidente')}
       </div>
@@ -74,12 +69,12 @@ function PaymentForm({ method, paymentData, setPaymentData, errors, showErrors }
     return (
       <div className="space-y-3 border rounded-xl p-4 bg-gray-50">
         <p className="text-sm font-medium text-gray-700">Pago en efectivo</p>
-
         <div className="bg-white rounded-lg p-3 text-sm text-gray-600 space-y-1 border">
-          <p>Podras pagar en efectivo al recibir tu pedido.</p>
+          <p>Podras pagar en efectivo al momento de recibir tu pedido.</p>
+          <p className="mt-2"><span className="font-medium">Horario de entrega:</span> Lunes a Sabado 8am - 6pm</p>
+          <p><span className="font-medium">Contacto:</span> +504 9999-8888</p>
         </div>
-
-        {field('cashNote', 'Nota adicional (opcional)', 'Llamar antes...')}
+        {field('cashNote', 'Nota adicional (opcional)', 'Llamar antes de llegar...')}
       </div>
     );
   }
@@ -100,70 +95,94 @@ export default function Checkout() {
     method: ''
   });
 
-  const [errors, setErrors] = useState({});
-  const [paymentErrors, setPaymentErrors] = useState({});
-  const [showErrors, setShowErrors] = useState(false);
-
   const [paymentData, setPaymentData] = useState({});
+  const [errors, setErrors] = useState({});
+  const [coupon, setCoupon] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [couponMsg, setCouponMsg] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   const shipping = subtotal >= 2000
-    ? { cost: 0 }
+    ? { cost: 0, label: 'Gratis' }
     : calculateShipping(subtotal, form.city, itemCount);
 
-  const finalTotal = total + shipping.cost;
+  const baseTotal = total + shipping.cost;
+  const finalTotal = baseTotal - discount;
 
-  const validate = () => {
-    let newErrors = {};
-    let payErrors = {};
+  const applyCoupon = () => {
+    const code = coupon.trim().toUpperCase();
+    if (!code) { setDiscount(0); setCouponMsg(''); setAppliedCoupon(null); return; }
 
-    if (!form.name.trim()) newErrors.name = 'El nombre es obligatorio';
-    if (!form.address.trim()) newErrors.address = 'La direccion es obligatoria';
+    const found = COUPONS.find(c => c.code === code);
+    if (!found) { setDiscount(0); setCouponMsg('Codigo invalido'); setAppliedCoupon(null); return; }
 
-    if (!/^\d{8}$/.test(form.phone))
-      newErrors.phone = 'Telefono invalido (8 digitos)';
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      newErrors.email = 'Correo invalido';
-
-    if (!form.method) newErrors.method = 'Selecciona un metodo de pago';
-
-    if (form.method.includes('Tarjeta')) {
-      if (!paymentData.cardName) payErrors.cardName = 'Requerido';
-      if (!/^\d{16}$/.test(paymentData.cardNumber || ''))
-        payErrors.cardNumber = 'Debe tener 16 digitos';
-      if (!/^\d{2}\/\d{2}$/.test(paymentData.expiry || ''))
-        payErrors.expiry = 'Formato MM/AA';
-      if (!/^\d{3}$/.test(paymentData.cvv || ''))
-        payErrors.cvv = '3 digitos';
+    if (new Date() > new Date(found.expires)) {
+      setDiscount(0); setCouponMsg('Cupon expirado'); setAppliedCoupon(null); return;
     }
 
-    if (form.method === 'Transferencia bancaria') {
-      if (!paymentData.transferRef) payErrors.transferRef = 'Requerido';
-      if (!paymentData.transferBank) payErrors.transferBank = 'Requerido';
+    if (baseTotal < found.min) {
+      setDiscount(0); setCouponMsg(`Minimo L. ${found.min}`); setAppliedCoupon(null); return;
     }
 
-    setErrors(newErrors);
-    setPaymentErrors(payErrors);
+    const d = found.type === 'percent' ? baseTotal * (found.value / 100) : found.value;
+    setDiscount(d);
+    setCouponMsg(`Cupon aplicado -L. ${d.toFixed(2)}`);
+    setAppliedCoupon(found);
+  };
 
-    return Object.keys(newErrors).length === 0 &&
-           Object.keys(payErrors).length === 0;
+  const handleCouponChange = (value) => {
+    setCoupon(value);
+    if (!value.trim()) { setDiscount(0); setCouponMsg(''); setAppliedCoupon(null); }
   };
 
   const handleSubmit = async () => {
-    setShowErrors(true);
+    let newErrors = {};
 
-    if (!validate()) return;
+    if (!form.name.trim()) newErrors.name = 'El nombre es obligatorio';
+    if (!form.address.trim()) newErrors.address = 'La direccion es obligatoria';
+    if (!form.phone.trim()) newErrors.phone = 'El telefono es obligatorio';
+    if (!/^\d{8}$/.test(form.phone)) newErrors.phone = 'El telefono debe tener 8 digitos';
+    if (!form.email.trim()) newErrors.email = 'El correo es obligatorio';
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Correo invalido';
+    if (!form.method) newErrors.method = 'Seleccione un metodo de pago';
 
+    if (form.method === 'Tarjeta de crédito' || form.method === 'Tarjeta de débito') {
+      if (!paymentData.cardName) newErrors.cardName = 'Nombre en tarjeta requerido';
+      if (!/^\d{16}$/.test(paymentData.cardNumber || '')) newErrors.cardNumber = 'Numero de tarjeta invalido';
+      if (!paymentData.expiry) newErrors.expiry = 'Fecha requerida';
+      if (!/^\d{3,4}$/.test(paymentData.cvv || '')) newErrors.cvv = 'CVV invalido';
+    }
+
+    if (form.method === 'Transferencia bancaria') {
+      if (!paymentData.transferRef) newErrors.transferRef = 'Referencia requerida';
+      if (!paymentData.transferBank) newErrors.transferBank = 'Banco requerido';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
     await new Promise(r => setTimeout(r, 1500));
 
+    const orderId = 'ORD-' + Math.random().toString(36).slice(2, 10).toUpperCase();
     const order = {
+      id: orderId,
       items: cart,
+      subtotal,
+      tax,
+      shipping: shipping.cost,
+      discount,
       total: finalTotal,
-      customer: form
+      customer: form,
+      paymentData,
+      coupon: appliedCoupon?.code || null,
+      status: 'Procesado'
     };
 
     trackPurchase(order);
@@ -178,47 +197,38 @@ export default function Checkout() {
         <div className="bg-white p-6 rounded-2xl space-y-4">
           <h2 className="font-bold text-lg mb-2">Datos de entrega</h2>
 
-          <div>
-            <label className="text-xs text-gray-500">Nombre completo</label>
-            <input className="w-full border rounded-xl px-4 py-2 text-sm"
-              onChange={e => setForm({ ...form, name: e.target.value })} />
-            {showErrors && errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-          </div>
+          <input placeholder="Nombre completo" className="w-full border rounded-xl px-4 py-2 text-sm"
+            onChange={e => setForm({ ...form, name: e.target.value })} />
+          {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
 
-          <div>
-            <label className="text-xs text-gray-500">Direccion</label>
-            <input className="w-full border rounded-xl px-4 py-2 text-sm"
-              onChange={e => setForm({ ...form, address: e.target.value })} />
-            {showErrors && errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
-          </div>
+          <input placeholder="Direccion" className="w-full border rounded-xl px-4 py-2 text-sm"
+            onChange={e => setForm({ ...form, address: e.target.value })} />
+          {errors.address && <p className="text-red-500 text-xs">{errors.address}</p>}
 
-          <div>
-            <label className="text-xs text-gray-500">Telefono</label>
-            <input className="w-full border rounded-xl px-4 py-2 text-sm"
-              onChange={e => setForm({ ...form, phone: e.target.value })} />
-            {showErrors && errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
-          </div>
+          <select className="w-full border rounded-xl px-4 py-2 text-sm"
+            value={form.city}
+            onChange={e => setForm({ ...form, city: e.target.value })}>
+            {CITIES.map(c => <option key={c}>{c}</option>)}
+          </select>
 
-          <div>
-            <label className="text-xs text-gray-500">Correo electronico</label>
-            <input className="w-full border rounded-xl px-4 py-2 text-sm"
-              onChange={e => setForm({ ...form, email: e.target.value })} />
-            {showErrors && errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
-          </div>
+          <input placeholder="Telefono" className="w-full border rounded-xl px-4 py-2 text-sm"
+            onChange={e => setForm({ ...form, phone: e.target.value })} />
+          {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
+
+          <input placeholder="Correo electronico" className="w-full border rounded-xl px-4 py-2 text-sm"
+            onChange={e => setForm({ ...form, email: e.target.value })} />
+          {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
 
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-700">Metodo de pago</h3>
             {METHODS.map(m => (
               <label key={m} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  checked={form.method === m}
-                  onChange={() => { setForm({ ...form, method: m }); setPaymentData({}); }}
-                />
+                <input type="radio" checked={form.method === m}
+                  onChange={() => { setForm({ ...form, method: m }); setPaymentData({}); }} />
                 {m}
               </label>
             ))}
-            {showErrors && errors.method && <p className="text-xs text-red-500">{errors.method}</p>}
+            {errors.method && <p className="text-red-500 text-xs">{errors.method}</p>}
           </div>
 
           {form.method && (
@@ -226,20 +236,15 @@ export default function Checkout() {
               method={form.method}
               paymentData={paymentData}
               setPaymentData={setPaymentData}
-              errors={paymentErrors}
-              showErrors={showErrors}
+              errors={errors}
             />
           )}
-
         </div>
 
-        <div className="bg-white p-6 rounded-2xl">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="mt-6 w-full bg-black text-white py-3 rounded-xl font-semibold"
-          >
-            {loading ? 'Procesando...' : 'Confirmar compra'}
+        <div className="bg-white p-6 rounded-2xl h-fit">
+          <button onClick={handleSubmit}
+            className="mt-6 w-full bg-black text-white py-3 rounded-xl font-semibold">
+            Confirmar compra
           </button>
         </div>
 
