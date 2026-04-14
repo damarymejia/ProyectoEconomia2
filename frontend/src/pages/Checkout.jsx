@@ -20,7 +20,8 @@ const METHODS = [
   'Pago en efectivo'
 ];
 
-function PaymentForm({ method, paymentData, setPaymentData, errors }) {
+function PaymentForm({ method, paymentData, setPaymentData, errors, showErrors }) {
+
   const field = (key, label, placeholder, type = 'text') => (
     <div>
       <label className="text-xs text-gray-500 mb-1 block">{label}</label>
@@ -31,7 +32,9 @@ function PaymentForm({ method, paymentData, setPaymentData, errors }) {
         onChange={e => setPaymentData({ ...paymentData, [key]: e.target.value })}
         className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
       />
-      {errors[key] && <p className="text-xs text-red-500 mt-1">{errors[key]}</p>}
+      {showErrors && errors[key] && (
+        <p className="text-xs text-red-500 mt-1">{errors[key]}</p>
+      )}
     </div>
   );
 
@@ -40,7 +43,7 @@ function PaymentForm({ method, paymentData, setPaymentData, errors }) {
       <div className="space-y-3 border rounded-xl p-4 bg-gray-50">
         <p className="text-sm font-medium text-gray-700">{method}</p>
         {field('cardName', 'Nombre en la tarjeta', 'Juan Perez')}
-        {field('cardNumber', 'Numero de tarjeta', '1234 5678 9012 3456')}
+        {field('cardNumber', 'Numero de tarjeta', '1234567890123456')}
         <div className="grid grid-cols-2 gap-3">
           {field('expiry', 'Vencimiento', 'MM/AA')}
           {field('cvv', 'CVV', '123')}
@@ -73,12 +76,10 @@ function PaymentForm({ method, paymentData, setPaymentData, errors }) {
         <p className="text-sm font-medium text-gray-700">Pago en efectivo</p>
 
         <div className="bg-white rounded-lg p-3 text-sm text-gray-600 space-y-1 border">
-          <p>Podras pagar en efectivo al momento de recibir tu pedido.</p>
-          <p className="mt-2"><span className="font-medium">Horario de entrega:</span> Lunes a Sabado 8am - 6pm</p>
-          <p><span className="font-medium">Contacto:</span> +504 9999-8888</p>
+          <p>Podras pagar en efectivo al recibir tu pedido.</p>
         </div>
 
-        {field('cashNote', 'Nota adicional (opcional)', 'Llamar antes de llegar...')}
+        {field('cashNote', 'Nota adicional (opcional)', 'Llamar antes...')}
       </div>
     );
   }
@@ -101,43 +102,38 @@ export default function Checkout() {
 
   const [errors, setErrors] = useState({});
   const [paymentErrors, setPaymentErrors] = useState({});
-  const [paymentData, setPaymentData] = useState({});
+  const [showErrors, setShowErrors] = useState(false);
 
-  const [coupon, setCoupon] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [couponMsg, setCouponMsg] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [paymentData, setPaymentData] = useState({});
   const [loading, setLoading] = useState(false);
 
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   const shipping = subtotal >= 2000
-    ? { cost: 0, label: 'Gratis' }
+    ? { cost: 0 }
     : calculateShipping(subtotal, form.city, itemCount);
 
-  const baseTotal = total + shipping.cost;
-  const finalTotal = baseTotal - discount;
+  const finalTotal = total + shipping.cost;
 
   const validate = () => {
     let newErrors = {};
+    let payErrors = {};
 
     if (!form.name.trim()) newErrors.name = 'El nombre es obligatorio';
     if (!form.address.trim()) newErrors.address = 'La direccion es obligatoria';
 
-    if (!form.phone.match(/^\d{8}$/))
+    if (!/^\d{8}$/.test(form.phone))
       newErrors.phone = 'Telefono invalido (8 digitos)';
 
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = 'Correo invalido';
 
     if (!form.method) newErrors.method = 'Selecciona un metodo de pago';
 
-    let payErrors = {};
-
     if (form.method.includes('Tarjeta')) {
       if (!paymentData.cardName) payErrors.cardName = 'Requerido';
       if (!/^\d{16}$/.test(paymentData.cardNumber || ''))
-        payErrors.cardNumber = '16 digitos';
+        payErrors.cardNumber = 'Debe tener 16 digitos';
       if (!/^\d{2}\/\d{2}$/.test(paymentData.expiry || ''))
         payErrors.expiry = 'Formato MM/AA';
       if (!/^\d{3}$/.test(paymentData.cvv || ''))
@@ -157,25 +153,17 @@ export default function Checkout() {
   };
 
   const handleSubmit = async () => {
+    setShowErrors(true);
+
     if (!validate()) return;
 
     setLoading(true);
     await new Promise(r => setTimeout(r, 1500));
 
-    const orderId = 'ORD-' + Math.random().toString(36).slice(2, 10).toUpperCase();
-
     const order = {
-      id: orderId,
       items: cart,
-      subtotal,
-      tax,
-      shipping: shipping.cost,
-      discount,
       total: finalTotal,
-      customer: form,
-      paymentData,
-      coupon: appliedCoupon?.code || null,
-      status: 'Procesado'
+      customer: form
     };
 
     trackPurchase(order);
@@ -190,33 +178,33 @@ export default function Checkout() {
         <div className="bg-white p-6 rounded-2xl space-y-4">
           <h2 className="font-bold text-lg mb-2">Datos de entrega</h2>
 
-          <input
-            placeholder="Nombre completo"
-            className="w-full border rounded-xl px-4 py-2 text-sm"
-            onChange={e => setForm({ ...form, name: e.target.value })}
-          />
-          {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+          <div>
+            <label className="text-xs text-gray-500">Nombre completo</label>
+            <input className="w-full border rounded-xl px-4 py-2 text-sm"
+              onChange={e => setForm({ ...form, name: e.target.value })} />
+            {showErrors && errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+          </div>
 
-          <input
-            placeholder="Direccion"
-            className="w-full border rounded-xl px-4 py-2 text-sm"
-            onChange={e => setForm({ ...form, address: e.target.value })}
-          />
-          {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
+          <div>
+            <label className="text-xs text-gray-500">Direccion</label>
+            <input className="w-full border rounded-xl px-4 py-2 text-sm"
+              onChange={e => setForm({ ...form, address: e.target.value })} />
+            {showErrors && errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
+          </div>
 
-          <input
-            placeholder="Telefono"
-            className="w-full border rounded-xl px-4 py-2 text-sm"
-            onChange={e => setForm({ ...form, phone: e.target.value })}
-          />
-          {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+          <div>
+            <label className="text-xs text-gray-500">Telefono</label>
+            <input className="w-full border rounded-xl px-4 py-2 text-sm"
+              onChange={e => setForm({ ...form, phone: e.target.value })} />
+            {showErrors && errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+          </div>
 
-          <input
-            placeholder="Correo electronico"
-            className="w-full border rounded-xl px-4 py-2 text-sm"
-            onChange={e => setForm({ ...form, email: e.target.value })}
-          />
-          {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+          <div>
+            <label className="text-xs text-gray-500">Correo electronico</label>
+            <input className="w-full border rounded-xl px-4 py-2 text-sm"
+              onChange={e => setForm({ ...form, email: e.target.value })} />
+            {showErrors && errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+          </div>
 
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-700">Metodo de pago</h3>
@@ -224,14 +212,13 @@ export default function Checkout() {
               <label key={m} className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
-                  name="method"
                   checked={form.method === m}
                   onChange={() => { setForm({ ...form, method: m }); setPaymentData({}); }}
                 />
                 {m}
               </label>
             ))}
-            {errors.method && <p className="text-xs text-red-500">{errors.method}</p>}
+            {showErrors && errors.method && <p className="text-xs text-red-500">{errors.method}</p>}
           </div>
 
           {form.method && (
@@ -240,8 +227,10 @@ export default function Checkout() {
               paymentData={paymentData}
               setPaymentData={setPaymentData}
               errors={paymentErrors}
+              showErrors={showErrors}
             />
           )}
+
         </div>
 
         <div className="bg-white p-6 rounded-2xl">
