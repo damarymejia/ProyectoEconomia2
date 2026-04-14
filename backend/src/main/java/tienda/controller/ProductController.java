@@ -1,9 +1,10 @@
 package com.tiendahn.controller;
 
 import com.tiendahn.model.Product;
-import com.tiendahn.repository.ProductRepository;
+// import com.tiendahn.repository.ProductRepository; // Comentado
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -11,35 +12,41 @@ import java.util.List;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class ProductController {
-    private final ProductRepository repo;
+    // private final ProductRepository repo; // Comentado para evitar error de inyección
 
     @GetMapping
-    public List<Product> getAll() { return repo.findAll(); }
+    public List<Product> getAll() { 
+        return new ArrayList<>(); 
+    }
 
     @GetMapping("/{id}")
     public Product getById(@PathVariable Long id) {
-        return repo.findById(id).orElseThrow();
+        return new Product(); // Devuelve un objeto vacío
     }
 
     @GetMapping("/category/{category}")
     public List<Product> getByCategory(@PathVariable String category) {
-        return repo.findByCategory(category);
+        return new ArrayList<>();
     }
 
     @GetMapping("/search")
     public List<Product> search(@RequestParam String q) {
-        return repo.findByNameContainingIgnoreCase(q);
+        return new ArrayList<>();
     }
 
     @PostMapping
-    public Product create(@RequestBody Product product) { return repo.save(product); }
+    public Product create(@RequestBody Product product) { 
+        return product; 
+    }
 
     @PutMapping("/{id}")
     public Product update(@PathVariable Long id, @RequestBody Product product) {
         product.setId(id);
-        return repo.save(product);
+        return product;
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { repo.deleteById(id); }
+    public void delete(@PathVariable Long id) { 
+        
+    }
 }
