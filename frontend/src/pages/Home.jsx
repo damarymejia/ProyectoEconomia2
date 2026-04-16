@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck,
@@ -74,6 +74,12 @@ function Features() {
 
 /* CATEGORIES */
 function Categories() {
+  const navigate = useNavigate();
+
+  const handleCategory = (categoryName) => {
+    navigate(`/products?category=${categoryName}`);
+  };
+
   return (
     <section className="bg-gray-100 text-black py-16">
       <div className="max-w-7xl mx-auto px-6">
@@ -87,18 +93,15 @@ function Categories() {
 
         <div className="grid md:grid-cols-4 gap-6">
           {CATEGORIES.map((c) => (
-            <Link
+            <motion.div
               key={c.name}
-              to={`/products?category=${encodeURIComponent(c.name)}`}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => handleCategory(c.name)}
+              className="bg-white text-black rounded-2xl p-8 text-center shadow-lg cursor-pointer"
             >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-white text-black rounded-2xl p-8 text-center shadow-lg cursor-pointer"
-              >
-                <h3 className="font-semibold text-lg">{c.name}</h3>
-                <p className="text-sm text-gray-500 mt-2">Ver productos</p>
-              </motion.div>
-            </Link>
+              <h3 className="font-semibold text-lg">{c.name}</h3>
+              <p className="text-sm text-gray-500 mt-2">Ver productos</p>
+            </motion.div>
           ))}
         </div>
 
