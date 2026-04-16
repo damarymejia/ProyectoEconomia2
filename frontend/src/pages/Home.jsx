@@ -15,7 +15,7 @@ import {
 import { PRODUCTS } from '../data/products';
 
 const CATEGORIES = [
-  { name: 'Electrónicos' },
+  { name: 'Electronicos' },
   { name: 'Ropa' },
   { name: 'Hogar' },
   { name: 'Deportes' }
@@ -72,7 +72,7 @@ function Features() {
   );
 }
 
-/* CATEGORIES — ahora con Link funcional */
+/* CATEGORIES */
 function Categories() {
   return (
     <section className="bg-gray-100 text-black py-16">
@@ -116,6 +116,7 @@ function ProductCard({ product }) {
         <div className="aspect-square overflow-hidden">
           <img
             src={product.image}
+            alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition"
           />
         </div>
@@ -141,7 +142,7 @@ function ProductCard({ product }) {
   );
 }
 
-/* CONTACT — sección nueva */
+/* CONTACT */
 function Contact() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sent, setSent] = useState(false);
@@ -151,7 +152,6 @@ function Contact() {
 
   const handleSubmit = () => {
     if (!form.name || !form.email || !form.message) return;
-    // Aquí conecta con tu backend o servicio de email
     console.log('Formulario enviado:', form);
     setSent(true);
     setForm({ name: '', email: '', subject: '', message: '' });
