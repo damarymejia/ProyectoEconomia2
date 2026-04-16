@@ -5,7 +5,11 @@ import {
   ShieldCheck,
   Truck,
   Sparkles,
-  Star
+  Star,
+  MapPin,
+  Phone,
+  Mail,
+  Clock
 } from 'lucide-react';
 
 import { PRODUCTS } from '../data/products';
@@ -68,7 +72,7 @@ function Features() {
   );
 }
 
-
+/* CATEGORIES — ahora con Link funcional */
 function Categories() {
   return (
     <section className="bg-gray-100 text-black py-16">
@@ -83,14 +87,18 @@ function Categories() {
 
         <div className="grid md:grid-cols-4 gap-6">
           {CATEGORIES.map((c) => (
-            <motion.div
+            <Link
               key={c.name}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white text-black rounded-2xl p-8 text-center shadow-lg cursor-pointer"
+              to={`/products?category=${encodeURIComponent(c.name)}`}
             >
-              <h3 className="font-semibold text-lg">{c.name}</h3>
-              <p className="text-sm text-gray-500 mt-2">Ver productos</p>
-            </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="bg-white text-black rounded-2xl p-8 text-center shadow-lg cursor-pointer"
+              >
+                <h3 className="font-semibold text-lg">{c.name}</h3>
+                <p className="text-sm text-gray-500 mt-2">Ver productos</p>
+              </motion.div>
+            </Link>
           ))}
         </div>
 
@@ -99,7 +107,7 @@ function Categories() {
   );
 }
 
-
+/* PRODUCT CARD */
 function ProductCard({ product }) {
   return (
     <Link to={`/product/${product.id}`} className="group">
@@ -133,6 +141,129 @@ function ProductCard({ product }) {
   );
 }
 
+/* CONTACT — sección nueva */
+function Contact() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [sent, setSent] = useState(false);
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = () => {
+    if (!form.name || !form.email || !form.message) return;
+    // Aquí conecta con tu backend o servicio de email
+    console.log('Formulario enviado:', form);
+    setSent(true);
+    setForm({ name: '', email: '', subject: '', message: '' });
+  };
+
+  const info = [
+    { icon: <MapPin size={20} />, label: 'Dirección', value: 'Tegucigalpa, Honduras' },
+    { icon: <Phone size={20} />, label: 'Teléfono', value: '+504 9999-9999' },
+    { icon: <Mail size={20} />, label: 'Correo', value: 'contacto@tienda.com' },
+    { icon: <Clock size={20} />, label: 'Horario', value: 'Lun – Vie, 8:00 AM – 6:00 PM' }
+  ];
+
+  return (
+    <section className="bg-gray-100 py-16">
+      <div className="max-w-7xl mx-auto px-6">
+
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold">Contáctanos</h2>
+          <p className="text-gray-500 mt-2">Estamos aquí para ayudarte</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-md overflow-hidden grid md:grid-cols-2">
+
+          {/* Información de contacto */}
+          <div className="p-8 border-r border-gray-100">
+            <h3 className="text-xl font-semibold mb-6">Información de contacto</h3>
+            <div className="space-y-5">
+              {info.map((item) => (
+                <div key={item.label} className="flex items-start gap-4">
+                  <div className="bg-gray-100 p-2 rounded-xl">{item.icon}</div>
+                  <div>
+                    <p className="text-sm text-gray-400">{item.label}</p>
+                    <p className="font-medium">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Formulario */}
+          <div className="p-8">
+            <h3 className="text-xl font-semibold mb-6">Envíanos un mensaje</h3>
+
+            {sent ? (
+              <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-center">
+                ¡Mensaje enviado! Te responderemos pronto.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-500 mb-1 block">Nombre</label>
+                    <input
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="Tu nombre"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500 mb-1 block">Correo</label>
+                    <input
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="tu@correo.com"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-500 mb-1 block">Asunto</label>
+                  <input
+                    name="subject"
+                    value={form.subject}
+                    onChange={handleChange}
+                    placeholder="¿En qué podemos ayudarte?"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-500 mb-1 block">Mensaje</label>
+                  <textarea
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
+                    placeholder="Escribe tu mensaje aquí..."
+                    rows={4}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  className="w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition"
+                >
+                  Enviar mensaje
+                </button>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* HOME */
 export default function Home() {
   const featured = useMemo(() => PRODUCTS.slice(0, 8), []);
@@ -155,6 +286,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <Contact />
 
     </main>
   );
