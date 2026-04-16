@@ -1,16 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  ShieldCheck,
-  Truck,
-  Sparkles,
-  Star,
-  MapPin,
-  Phone,
-  Mail,
-  Clock
-} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { PRODUCTS } from '../data/products';
 
@@ -21,6 +11,39 @@ const CATEGORIES = [
   { name: 'Deportes' }
 ];
 
+/* MODAL DE DESCUENTO */
+function DiscountModal() {
+  const [isOpen, setIsOpen] = useState(true);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm text-center relative">
+        <button 
+          onClick={() => setIsOpen(false)}
+          className="absolute top-3 right-3 text-gray-400 hover:text-black font-bold"
+        >
+          X
+        </button>
+        <h2 className="text-2xl font-bold mb-2">Bienvenido a TiendaHN</h2>
+        <p className="text-gray-600 mb-6 text-sm">
+          Utiliza el siguiente codigo en tu primera compra para obtener un 10% de descuento:
+        </p>
+        <div className="border-2 border-dashed border-black p-3 mb-4 font-mono font-bold text-2xl bg-gray-50">
+          DIGITAL10
+        </div>
+        <button 
+          onClick={() => setIsOpen(false)}
+          className="w-full bg-black text-white py-3 rounded-xl font-medium"
+        >
+          Aceptar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* HERO */
 function Hero() {
   return (
@@ -29,7 +52,7 @@ function Hero() {
         Encuentra lo que necesitas
       </h1>
       <p className="text-gray-400 max-w-xl mx-auto">
-        Compra productos de forma rápida, segura y con la mejor experiencia
+        Compra productos de forma rapida, segura y con la mejor experiencia
       </p>
     </section>
   );
@@ -39,17 +62,14 @@ function Hero() {
 function Features() {
   const data = [
     {
-      icon: <ShieldCheck size={30} />,
       title: 'Seguridad garantizada',
-      desc: 'Tus pagos y datos están protegidos en todo momento'
+      desc: 'Tus pagos y datos estan protegidos en todo momento'
     },
     {
-      icon: <Truck size={30} />,
-      title: 'Envíos rápidos',
-      desc: 'Recibe tus pedidos en tiempo récord'
+      title: 'Envios rapidos',
+      desc: 'Recibe tus pedidos en tiempo record'
     },
     {
-      icon: <Sparkles size={30} />,
       title: 'Entregas gratis',
       desc: 'Por tus compras mayores a L.2,000'
     }
@@ -63,7 +83,6 @@ function Features() {
           whileHover={{ y: -5 }}
           className="bg-white p-6 rounded-2xl shadow-md border text-center"
         >
-          <div className="mb-4 flex justify-center">{f.icon}</div>
           <h3 className="font-semibold mb-2">{f.title}</h3>
           <p className="text-gray-500 text-sm">{f.desc}</p>
         </motion.div>
@@ -72,12 +91,11 @@ function Features() {
   );
 }
 
-/* CATEGORIES - Corregido para apuntar a /catalog */
+/* CATEGORIES */
 function Categories() {
   const navigate = useNavigate();
 
   const handleCategory = (categoryName) => {
-    // Cambiado de /products a /catalog para coincidir con tu componente de Catálogo
     navigate(`/catalog?category=${categoryName}`);
   };
 
@@ -85,9 +103,9 @@ function Categories() {
     <section className="bg-gray-100 text-black py-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold">Categorías</h2>
+          <h2 className="text-3xl font-bold">Categorias</h2>
           <p className="text-gray-400 mt-2">
-            Explora fácilmente lo que estás buscando
+            Explora facilmente lo que estas buscando
           </p>
         </div>
 
@@ -124,19 +142,13 @@ function ProductCard({ product }) {
 
         <div className="p-4 flex-grow flex flex-col justify-between">
           <div>
-            <div className="flex text-yellow-400 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} fill="currentColor" />
-              ))}
-            </div>
             <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
             <p className="text-lg font-bold">L. {product.price}</p>
           </div>
-
-          <div className="mt-3 opacity-0 group-hover:opacity-100 transition">
-            <button className="w-full bg-black text-white py-2 rounded-lg text-xs">
+          <div className="mt-3 opacity-0 group-hover:opacity-100 transition text-center">
+            <span className="inline-block w-full bg-black text-white py-2 rounded-lg text-xs">
               Ver detalles
-            </button>
+            </span>
           </div>
         </div>
       </div>
@@ -158,89 +170,64 @@ function Contact() {
     setForm({ name: '', email: '', subject: '', message: '' });
   };
 
-  const info = [
-    { icon: <MapPin size={20} />, label: 'Dirección', value: 'Tegucigalpa, Honduras' },
-    { icon: <Phone size={20} />, label: 'Teléfono', value: '+504 9999-9999' },
-    { icon: <Mail size={20} />, label: 'Correo', value: 'contacto@tienda.com' },
-    { icon: <Clock size={20} />, label: 'Horario', value: 'Lun – Vie, 8:00 AM – 6:00 PM' }
-  ];
-
   return (
     <section className="bg-gray-100 py-16">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold">Contáctanos</h2>
-          <p className="text-gray-500 mt-2">Estamos aquí para ayudarte</p>
+          <h2 className="text-3xl font-bold">Contactanos</h2>
+          <p className="text-gray-500 mt-2">Estamos aqui para ayudarte</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-md overflow-hidden grid md:grid-cols-2">
           <div className="p-8 border-r border-gray-100">
-            <h3 className="text-xl font-semibold mb-6">Información de contacto</h3>
+            <h3 className="text-xl font-semibold mb-6">Informacion de contacto</h3>
             <div className="space-y-5">
-              {info.map((item) => (
-                <div key={item.label} className="flex items-start gap-4">
-                  <div className="bg-gray-100 p-2 rounded-xl">{item.icon}</div>
-                  <div>
-                    <p className="text-sm text-gray-400">{item.label}</p>
-                    <p className="font-medium">{item.value}</p>
-                  </div>
+                <div>
+                    <p className="text-sm text-gray-400">Direccion</p>
+                    <p className="font-medium">Tegucigalpa, Honduras</p>
                 </div>
-              ))}
+                <div>
+                    <p className="text-sm text-gray-400">Telefono</p>
+                    <p className="font-medium">+504 9999-9999</p>
+                </div>
+                <div>
+                    <p className="text-sm text-gray-400">Correo</p>
+                    <p className="font-medium">contacto@tienda.com</p>
+                </div>
             </div>
           </div>
 
           <div className="p-8">
-            <h3 className="text-xl font-semibold mb-6">Envíanos un mensaje</h3>
+            <h3 className="text-xl font-semibold mb-6">Envianos un mensaje</h3>
             {sent ? (
               <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-center">
-                ¡Mensaje enviado! Te responderemos pronto.
+                Mensaje enviado. Te responderemos pronto.
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-gray-500 mb-1 block">Nombre</label>
-                    <input
-                      name="name"
-                      value={form.name}
-                      onChange={handleChange}
-                      placeholder="Tu nombre"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500 mb-1 block">Correo</label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="tu@correo.com"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500 mb-1 block">Asunto</label>
-                  <input
-                    name="subject"
-                    value={form.subject}
-                    onChange={handleChange}
-                    placeholder="¿En qué podemos ayudarte?"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500 mb-1 block">Mensaje</label>
-                  <textarea
-                    name="message"
-                    value={form.message}
-                    onChange={handleChange}
-                    placeholder="Escribe tu mensaje aquí..."
-                    rows={4}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
-                  />
-                </div>
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Tu nombre"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="tu@correo.com"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <textarea
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  placeholder="Escribe tu mensaje aqui..."
+                  rows={4}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                />
                 <button
                   onClick={handleSubmit}
                   className="w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition"
@@ -261,7 +248,10 @@ export default function Home() {
   const featured = useMemo(() => PRODUCTS.slice(0, 8), []);
 
   return (
-    <main className="bg-gray-50">
+    <main className="bg-gray-50 relative">
+      {/* Componente de la ventana emergente */}
+      <DiscountModal />
+
       <Hero />
       <Features />
       <Categories />
