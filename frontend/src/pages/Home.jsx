@@ -11,36 +11,51 @@ const CATEGORIES = [
   { name: 'Deportes' }
 ];
 
-/* MODAL DE DESCUENTO */
-function DiscountModal() {
+/* NOTIFICACION FLOTANTE DE DESCUENTO */
+function DiscountToast() {
   const [isOpen, setIsOpen] = useState(true);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm text-center relative">
-        <button 
-          onClick={() => setIsOpen(false)}
-          className="absolute top-3 right-3 text-gray-400 hover:text-black font-bold"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 100 }}
+          className="fixed bottom-6 right-6 z-50 w-80 bg-white shadow-2xl rounded-2xl border border-gray-100 overflow-hidden"
         >
-          X
-        </button>
-        <h2 className="text-2xl font-bold mb-2">Bienvenido a TiendaHN</h2>
-        <p className="text-gray-600 mb-6 text-sm">
-          Utiliza el siguiente codigo en tu primera compra para obtener un 10% de descuento:
-        </p>
-        <div className="border-2 border-dashed border-black p-3 mb-4 font-mono font-bold text-2xl bg-gray-50">
-          DIGITAL10
-        </div>
-        <button 
-          onClick={() => setIsOpen(false)}
-          className="w-full bg-black text-white py-3 rounded-xl font-medium"
-        >
-          Aceptar
-        </button>
-      </div>
-    </div>
+          <div className="p-6 relative">
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-black font-bold text-sm"
+            >
+              X
+            </button>
+            
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+              Oferta especial
+            </p>
+            <h2 className="text-xl font-bold mb-2 text-black">
+              10% de descuento
+            </h2>
+            <p className="text-gray-600 mb-4 text-xs leading-relaxed">
+              Usa este codigo en tu primera compra y ahorra en tus productos favoritos.
+            </p>
+            
+            <div className="bg-gray-50 border-2 border-dashed border-black py-2 px-4 mb-4 text-center font-mono font-bold text-lg">
+              DIGITAL10
+            </div>
+
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+            >
+              Copiar codigo
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -248,9 +263,9 @@ export default function Home() {
   const featured = useMemo(() => PRODUCTS.slice(0, 8), []);
 
   return (
-    <main className="bg-gray-50 relative">
-      {/* Componente de la ventana emergente */}
-      <DiscountModal />
+    <main className="bg-gray-50 relative min-h-screen">
+      {/* Tarjeta de descuento flotante al lado derecho */}
+      <DiscountToast />
 
       <Hero />
       <Features />
