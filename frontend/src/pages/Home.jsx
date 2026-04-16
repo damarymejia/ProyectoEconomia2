@@ -72,18 +72,18 @@ function Features() {
   );
 }
 
-/* CATEGORIES */
+/* CATEGORIES - Corregido para apuntar a /catalog */
 function Categories() {
   const navigate = useNavigate();
 
   const handleCategory = (categoryName) => {
-    navigate(`/products?category=${categoryName}`);
+    // Cambiado de /products a /catalog para coincidir con tu componente de Catálogo
+    navigate(`/catalog?category=${categoryName}`);
   };
 
   return (
     <section className="bg-gray-100 text-black py-16">
       <div className="max-w-7xl mx-auto px-6">
-
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold">Categorías</h2>
           <p className="text-gray-400 mt-2">
@@ -91,7 +91,7 @@ function Categories() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {CATEGORIES.map((c) => (
             <motion.div
               key={c.name}
@@ -104,7 +104,6 @@ function Categories() {
             </motion.div>
           ))}
         </div>
-
       </div>
     </section>
   );
@@ -114,8 +113,7 @@ function Categories() {
 function ProductCard({ product }) {
   return (
     <Link to={`/product/${product.id}`} className="group">
-      <div className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-xl transition">
-
+      <div className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-xl transition h-full flex flex-col">
         <div className="aspect-square overflow-hidden">
           <img
             src={product.image}
@@ -124,18 +122,19 @@ function ProductCard({ product }) {
           />
         </div>
 
-        <div className="p-4">
-          <div className="flex text-yellow-400 mb-2">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={14} fill="currentColor" />
-            ))}
+        <div className="p-4 flex-grow flex flex-col justify-between">
+          <div>
+            <div className="flex text-yellow-400 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={14} fill="currentColor" />
+              ))}
+            </div>
+            <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
+            <p className="text-lg font-bold">L. {product.price}</p>
           </div>
 
-          <h3 className="font-semibold">{product.name}</h3>
-          <p className="text-lg font-bold">L. {product.price}</p>
-
           <div className="mt-3 opacity-0 group-hover:opacity-100 transition">
-            <button className="w-full bg-black text-white py-2 rounded-lg">
+            <button className="w-full bg-black text-white py-2 rounded-lg text-xs">
               Ver detalles
             </button>
           </div>
@@ -155,7 +154,6 @@ function Contact() {
 
   const handleSubmit = () => {
     if (!form.name || !form.email || !form.message) return;
-    console.log('Formulario enviado:', form);
     setSent(true);
     setForm({ name: '', email: '', subject: '', message: '' });
   };
@@ -170,15 +168,12 @@ function Contact() {
   return (
     <section className="bg-gray-100 py-16">
       <div className="max-w-7xl mx-auto px-6">
-
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold">Contáctanos</h2>
           <p className="text-gray-500 mt-2">Estamos aquí para ayudarte</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-md overflow-hidden grid md:grid-cols-2">
-
-          {/* Información de contacto */}
           <div className="p-8 border-r border-gray-100">
             <h3 className="text-xl font-semibold mb-6">Información de contacto</h3>
             <div className="space-y-5">
@@ -194,10 +189,8 @@ function Contact() {
             </div>
           </div>
 
-          {/* Formulario */}
           <div className="p-8">
             <h3 className="text-xl font-semibold mb-6">Envíanos un mensaje</h3>
-
             {sent ? (
               <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-center">
                 ¡Mensaje enviado! Te responderemos pronto.
@@ -227,7 +220,6 @@ function Contact() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="text-sm text-gray-500 mb-1 block">Asunto</label>
                   <input
@@ -238,7 +230,6 @@ function Contact() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
-
                 <div>
                   <label className="text-sm text-gray-500 mb-1 block">Mensaje</label>
                   <textarea
@@ -250,7 +241,6 @@ function Contact() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
                   />
                 </div>
-
                 <button
                   onClick={handleSubmit}
                   className="w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition"
@@ -260,7 +250,6 @@ function Contact() {
               </div>
             )}
           </div>
-
         </div>
       </div>
     </section>
@@ -273,17 +262,13 @@ export default function Home() {
 
   return (
     <main className="bg-gray-50">
-
       <Hero />
-
       <Features />
-
       <Categories />
 
       <section className="max-w-7xl mx-auto px-6 py-16">
         <h2 className="text-2xl font-bold mb-6">Productos destacados</h2>
-
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {featured.map(p => (
             <ProductCard key={p.id} product={p} />
           ))}
@@ -291,7 +276,6 @@ export default function Home() {
       </section>
 
       <Contact />
-
     </main>
   );
 }
