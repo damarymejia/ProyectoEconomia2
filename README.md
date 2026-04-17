@@ -32,53 +32,6 @@ Backend: https://tiendahn-backend.onrender.com
 - Frontend: Render
 - Backend: Render
 
-## Estructura del proyecto
-tiendahn/
-├── frontend/
-│   ├── public/
-│   └── src/
-│       ├── components/
-│       │   ├── Navbar.jsx
-│       │   ├── Footer.jsx
-│       │   └── ProtectedRoute.jsx
-│       ├── context/
-│       │   ├── CartContext.jsx
-│       │   └── AuthContext.jsx
-│       ├── data/
-│       │   └── products.js
-│       ├── pages/
-│       │   ├── Home.jsx
-│       │   ├── Catalog.jsx
-│       │   ├── ProductDetail.jsx
-│       │   ├── Cart.jsx
-│       │   ├── Checkout.jsx
-│       │   ├── OrderConfirmation.jsx
-│       │   ├── Policies.jsx
-│       │   ├── Analytics.jsx
-│       │   ├── Simulator.jsx
-│       │   └── Login.jsx
-│       └── utils/
-│           ├── analytics.js
-│           ├── storage.js
-│           └── shipping.js
-└── backend/
-└── src/main/java/com/tiendahn/
-├── config/
-│   └── SecurityConfig.java
-├── controller/
-│   ├── ProductController.java
-│   ├── OrderController.java
-│   └── UserController.java
-├── model/
-│   ├── Product.java
-│   ├── Order.java
-│   ├── OrderItem.java
-│   └── User.java
-└── repository/
-├── ProductRepository.java
-├── OrderRepository.java
-└── UserRepository.java
-
 ## Modulos implementados
 
 ### Inicio (Home)
@@ -160,7 +113,7 @@ Credenciales de administrador para pruebas:
 ### Frontend
 
 1. Clonar el repositorio
-git clone https://github.com/damarymejia/tiendahn.git
+git clone https://github.com/damarymejia/ProyectoEconomia2.git
 
 2. Entrar a la carpeta del frontend
 cd tiendahn/frontend
